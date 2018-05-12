@@ -10,17 +10,18 @@ knitr::opts_chunk$set(echo = TRUE)
 library("dslabs")
 library("dplyr")
 library("ggplot2")
-attach(us_contagious_diseases)
-attach(murders)
+library("reshape")
+library("readxl")
+
 ```
 
 
 
 # Disease Trends over Time in Florida vs Unemployment Rates
 
-I'm going to explore disease rate over time in Florida and also see if there's a relationship between disease rates and unemployment rates in Florida. 
+<br/> I'm going to explore disease rate over time in Florida and also see if there's a relationship between disease rates and unemployment rates in Florida. 
 
-```{r}
+```{r, echo=FALSE}
 
 us_disease <- us_contagious_diseases
 florida_disease <- us_disease %>% filter(state== "Florida", disease != "Polio")
@@ -30,29 +31,31 @@ florida_disease <- mutate(florida_disease, disease_rate = (count/population)*100
 
 ```
 
-```{r}
+```{r, echo=FALSE}
 
 ggplot(florida_disease, aes(x=year, y=disease_rate, fill=disease)) + geom_bar(stat='identity') + xlab(label="Years (1928 - 2011) ") + ylab(label="Disease rate (per 100,000 people) ") + ggtitle(label="Disease rate in Florida")
 
 ```
-The plot above shows the disease rate for Hepatitis A, Measles, Mumps, Pertussis, Rubella, and Smallpox per 100,000 people from 1928-2011 in Florida. I used the rate as opposed to the raw count because I wanted to adjust for the size of the population each year. In this stacked bar chart, you can view the proportion of the disease rate for each disease in a given year and this is useful because you can clearly see that before 1970, the measles was the disease with the highest disease rate relative to the other diseases. 
+
+
+  The plot above shows the disease rate for Hepatitis A, Measles, Mumps, Pertussis, Rubella, and Smallpox per 100,000 people from 1928-2011 in Florida. I used the rate as opposed to the raw count because I wanted to adjust for the size of the population each year. In this stacked bar chart, you can view the proportion of the disease rate for each disease in a given year and this is useful because you can clearly see that before 1970, the measles was the disease with the highest disease rate relative to the other diseases. 
 
 After about 1973, Hepatitis A emerged as having a higher disease rate compared to the other diseases in Florida. Overall, this plot also shows that the combined disease rate decreased over time and this is probably because of vaccinations, however we can't tell just by looking at this plot. 
 
-```{r}
+```{r, echo=FALSE}
 
 after_1979 <- florida_disease %>% filter(year >1979)
 ggplot(after_1979, aes(x=year, y=disease_rate, fill=disease)) + geom_bar(stat='identity') + xlab(label="Years (1980 - 2011) ") + ylab(label="Disease rate (per 100,000 people) ") + ggtitle(label="Disease rate in Florida")
 
 ```
-Another plot from 1980-2011 because the scale in the previous plot prevented us from clearly seeing trends for this range of years. After 1979, Hepatitis A was the disease with the highest disease rate and it occupied the majority until about 2006 when Pertussis made up more of the total disease rate for that year and the years after until 2011. 
+  <br/> Another plot from 1980-2011 because the scale in the previous plot prevented us from clearly seeing trends for this range of years. After 1979, Hepatitis A was the disease with the highest disease rate and it occupied the majority until about 2006 when Pertussis made up more of the total disease rate for that year and the years after until 2011. 
 
 
-I want to see if there is a relationship between average anual unemployment rate and disease rate in Florida. I used unemployment data from the Bureau of Labor Statistics. I can only look at this relationship between the year 1976 and 2011 because there isn't unemployment data for Florida before 1976.  
+  I want to see if there is a relationship between average anual unemployment rate and disease rate in Florida. I used unemployment data from the Bureau of Labor Statistics. I can only look at this relationship between the year 1976 and 2011 because there isn't unemployment data for Florida before 1976.  
 
-```{r}
+```{r, echo=FALSE}
 #combine the data , sum disease rate by year to get overall disease rate
-
+unemploymentrate_florida <- read_excel("unemploymentrate_florida.xlsx")
 plot_data <- aggregate(florida_disease$count, by = list(Year= florida_disease$year), FUN=sum)
 colnames(plot_data) <- c("year","count")
 
@@ -74,27 +77,21 @@ plot_data <- inner_join(plot_data, unemploymentrate_florida, by= "Year")
 colnames(plot_data) <- c("Year", "count", "population", "disease_rate","unemployment_rate")
 
 
+
+
 j <- ggplot(plot_data, aes(x=Year)) + geom_line(aes(y=disease_rate), colour="blue") +
-  geom_line(aes(y=unemployment_rate), colour="green") + xlab(label="Years (1976 - 2011) ") + ylab(label="Disease rate & Unemployment rate ") + ggtitle(label="Disease rate in Florida compared to Unemployment rate in Florida")
+  geom_line(aes(y=unemployment_rate), colour="green") + xlab(label="Years (1976 - 2011) ") + ylab(label="Disease rate & Unemployment rate ") + ggtitle(label="Disease rate in Florida compared to Unemployment rate in Florida") 
 
 j
 
 
 ```
+  <br/> In the plot above, the blue line shows the disease rate per 100,000 people and the green line shows the unemployment rate in Florida over time. I wanted to explore the idea that years with high disease rates will also coincide with high rates of unemployment. This line graph shows that there isn't a lot of similarity between the two. 
 
-```{r}
+```{r, echo=FALSE}
 ggplot(plot_data, aes(x=disease_rate,y=unemployment_rate)) + geom_point() + xlab(label="Disease Rate") + ylab(label="Unemployment Rate") + ggtitle(label="Unemployment and Disease Rate in Florida Years (1976 - 2011)")
 ```
+  <br/> Another way to look at the relationship between disease rates and unemployment rates in Florida is with a scatterplot. I don't see a linear trend between disease rates and unemployment rates there could be a logarithmic trend. Interestingly, when the disease rate is between 0 and 5, there are unemployment rates from 3% to 11%, there's lot of variance in these ranges. 
 
-Compare us disease rate to us unemployment rate 
-
-
-```{r}
-
-us_disease <- us_disease %>% filter(disease != "Polio")
-us_disease <- mutate(us_disease, disease_rate = (count/population)*100000)
-us_disease
-
-```
 
 
